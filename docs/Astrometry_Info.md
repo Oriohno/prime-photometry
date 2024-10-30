@@ -22,7 +22,7 @@ Running the --help flag reveals the formatting is:
 
 - _-output_ is the output directory to store the final files.
 
-- _-rot_val_ is an optional argument to specify the rotation angle.  This is normally 48°.  If you are dealing with a non-default rotation angle, or are on the galactic bulge grid, you will have to specify a different rotation.  Make sure the rotation angle is in degrees, then put the value in for this field, ex. _-rot_val -90_
+- _-rot_val_ is an optional argument to specify the rotation angle.  This is normally 48°.  If you are dealing with a non-default rotation angle, or are on the galactic bulge grid, you will have to specify a different rotation.  Make sure the rotation angle is in degrees, then put the value in for this field, ex. for -90 degree rotation, _-rot_val -90_
 
 Here is an example command in the setting of normal pipeline usage:
 
