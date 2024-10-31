@@ -226,9 +226,9 @@ def update_ra_dec_directory(directory, rot_val):
 
 def update_ra_dec_move_directory(input, output, rot_val):
     for f in sorted(os.listdir(input)):
-        if f.endswith('.ramp.fits'):
+        if f.endswith('.fits'):
             origpath = os.path.join(input,f)
-            fnewname = f.replace('.ramp.fits', '.ramp.new')
+            fnewname = f.replace('.fits', '.new')
             newpath = os.path.join(output,fnewname)
             shutil.copyfile(origpath, newpath)
             update_ra_dec(newpath, rot_val)
