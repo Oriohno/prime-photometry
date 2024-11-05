@@ -311,7 +311,12 @@ def zeropt(good_cat_stars,cleanPSFSources,PSFSources,idx_psfmass,idx_psfimage,im
     magcolname = colnames[2]
     magerrcolname = colnames[3]
 
-    psfweights = 1 / (good_cat_stars[magerrcolname][idx_psfmass]**2)
+    caterr = good_cat_stars[magerrcolname][idx_psfmass]
+    primeerr = cleanPSFSources['MAGERR_POINTSOURCE'][idx_psfimage]
+
+    comberr = np.sqrt(caterr ** 2 + primeerr ** 2)
+
+    psfweights_noclip = 1 / (comberr ** 2)
 
     psfoffsets = ma.array(good_cat_stars[magcolname][idx_psfmass] - cleanPSFSources['MAG_POINTSOURCE'][idx_psfimage])
     psfoffsets = psfoffsets.data
@@ -319,12 +324,12 @@ def zeropt(good_cat_stars,cleanPSFSources,PSFSources,idx_psfmass,idx_psfimage,im
     # 3 sigma clip
     psf_clipped = sigma_clip(psfoffsets)
     psfoffsets = psfoffsets[~psf_clipped.mask]
-    psfweights = psfweights[~psf_clipped.mask]
+    psfweights = np.array(psfweights_noclip[~psf_clipped.mask])
 
     # Compute statistics
-    zero_psfmean = np.average(psfoffsets, weights=psfweights)
-    zero_psfvar = np.average((psfoffsets - zero_psfmean) ** 2, weights=psfweights)
-    zero_psfstd = np.sqrt(zero_psfvar)
+    zero_psfmean = sum(psfoffsets * psfweights) / sum(psfweights)
+
+    zero_psfstd = np.sqrt(1 / sum(psfweights))
 
     # zero_psfmean, zero_psfmed, zero_psfstd = sigma_clipped_stats(psfoffsets)
     # print('PSF Mean ZP: %.2f\nPSF Median ZP: %.2f\nPSF STD ZP: %.2f'%(zero_psfmean, zero_psfmed, zero_psfstd))
@@ -687,6 +692,8 @@ defaults = dict(crop=300,survey='2MASS',RA=None,DEC=None,thresh=4.0)
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='runs sextractor and psfex on swarped img to get psf fit photometry, then '
                                                  'outputs ecsv w/ corrected mags')
+    parser.add_argument('-img_sub', action='store_true', help='optional flag, use this flag if doing photometry'
+                                                                'on subtracted image')
     parser.add_argument('-exp_query', action='store_true', help='optional flag, exports ecsv of astroquery results '
                                                                 'along with photometry')
     parser.add_argument('-exp_query_only', action='store_true', help='optional flag, use if photom is run already to only generate query results')
@@ -746,8 +753,12 @@ if __name__ == "__main__":
         data, header, w, raImage, decImage, width, height = img(args.dir, args.name, args.crop)
         Q = query(raImage, decImage, args.filter, width, height, args.survey)
         catalogName = sex1(args.name)
-        psfex(catalogName)
-        psfcatalogName = sex2(args.name)
+        if args.img_sub:
+            psfcatalogName = catalogName
+            pass
+        else:
+            psfex(catalogName)
+            psfcatalogName = sex2(args.name)
         good_cat_stars, cleanPSFSources, PSFSources, idx_psfmass, idx_psfimage = tables(Q, psfcatalogName, args.crop)
         if args.exp_query:
             queryexport(good_cat_stars, args.name, args.survey)
